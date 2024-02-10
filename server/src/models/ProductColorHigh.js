@@ -6,5 +6,7 @@ export const ProductColorHigh = db.define('ProductColorHigh', {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-    },
+    }
+  },{
+    timestamps: false
   });

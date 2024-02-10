@@ -25,5 +25,5 @@ export const Products = db.define('products', {
     //     type: DataTypes.JSON
     // }
 },{
-    timestamps: true
+    timestamps: false
 })

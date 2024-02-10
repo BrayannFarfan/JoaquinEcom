@@ -1,7 +1,7 @@
 import  { Color } from '../models/Color.js'
 
 
-export const getAllHigh = async (req, res) =>{
+export const getAllColor = async (req, res) =>{
     try {
         const getAllColors = await Color.findAll();
         return res.status(200).json(getAllColors);
@@ -9,7 +9,7 @@ export const getAllHigh = async (req, res) =>{
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
 }
-export const getOneHigh = async (req, res) =>{
+export const getOneColor = async (req, res) =>{
     const { id } = req.params;
     try {
         const getOneColor = await Color.findByPk(id);
@@ -55,7 +55,7 @@ export const updateColor = async (req, res) => {
     }
 };
 
-export const deleteHigh = async (req, res) => {
+export const deleteColor = async (req, res) => {
     const { id } = req.params;
 
     try {

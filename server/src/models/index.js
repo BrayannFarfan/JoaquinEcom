@@ -24,12 +24,6 @@ Products.hasMany(ProductColorHigh, { foreignKey: 'productId' });
 Color.hasMany(ProductColorHigh, { foreignKey: 'colorId' });
 Highs.hasMany(ProductColorHigh, { foreignKey: 'highId' });
 
-// Color.hasMany(Products, { foreignKey: 'colorId' });
-// Products.belongsTo(Color, { foreignKey: 'colorId' });
-
-
-// Highs.hasMany(Products, { foreignKey: 'highId' });
-// Products.belongsTo(Highs, { foreignKey: 'highId' });
 
 User.hasMany(Order);
 Order.belongsTo(User,{ foreignKey: 'userId' });

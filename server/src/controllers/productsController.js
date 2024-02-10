@@ -9,31 +9,71 @@ export const GetAllProducts = async ( req, res ) => {
 
     try {
 
-        const getAllProducts = await Products.findAll();
-        return res.status( 200 ).json( getAllProducts );
+        const getAllProducts = await Products.findAll({
+            include: [
+                {
+                    model: ProductColorHigh,
+                    include:[
+                        {model: Highs},
+                        {model: Color}
+                    ]
+                }
+            ]
+        });
+        
+        return res.status( 200 ).json( {getAllProducts} );
         
     } catch ( error ) {
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
 }
 
-export const GetOneProducts = async ( req, res ) => {
 
+
+export const GetOneProducts = async (req, res) => {
     const { id } = req.params;
     try {
+        const getOneProducts = await Products.findByPk(id, {
+            include: [
+                {
+                    model: ProductColorHigh,
+                    include:[
+                        {model: Highs},
+                        {model: Color}
+                    ]
+                }
+            ]
+        });
+
+        if (!getOneProducts) return res.status(404).json({ message: 'Product not found' });
         
-        const getOneProducts = await Products.findByPk(id);
+        const highsPromises  = getOneProducts.ProductColorHighs.map(async item => {
+            const highData = await item.high;
+            if (highData) {
+                return highData.dataValues;
+            }
+        });
 
-        if ( !getOneProducts ) return res.status( 404 ).json( { message: 'Product not found' } );
+        const colorsPromises  = getOneProducts.ProductColorHighs.map(async item => {
+            const colorData = await item.color;
+            if (colorData) {
+                return colorData.dataValues;
+            }
+        });
 
-     return res.status( 200 ).json( getOneProducts );
+        const highs = await Promise.all(highsPromises);
+        const colors = await Promise.all(colorsPromises);
 
-    } catch ( error ) {
+        return res.status(200).json({getOneProducts, highs, colors});
+    } catch (error) {
+        console.error(error); // Imprime el error en la consola para debuggear
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
-}
+};
 
 export const CreateProducts = async ( req, res ) => {
+
+
 
     try {
         const { name, price, description, stock, colorId, highId } = req.body;

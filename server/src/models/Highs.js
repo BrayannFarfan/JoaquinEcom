@@ -9,5 +9,5 @@ export const Highs = db.define('high', {
         type: DataTypes.INTEGER
     }
 },{
-    timestamps: true
+    timestamps: false
 });
