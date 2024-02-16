@@ -1,8 +1,6 @@
 import { Products } from '../models/Products.js';
-import { ProductColorHigh } from '../models/ProductColorHigh.js';
 import { Highs } from '../models/Highs.js';
 import { Color } from '../models/Color.js';
-import { db } from '../config/dbConfig.js';
 
 
 export const GetAllProducts = async ( req, res ) => {
@@ -11,15 +9,18 @@ export const GetAllProducts = async ( req, res ) => {
 
         const getAllProducts = await Products.findAll({
             include: [
-                {
-                    model: ProductColorHigh,
-                    include:[
-                        {model: Highs},
-                        {model: Color}
-                    ]
-                }
-            ]
-        });
+              {
+                model: Highs,
+                as: 'highs',
+                include: [
+                  {
+                    model: Color,
+                    as: 'colors',
+                  },
+                ],
+              },
+            ],
+          });
         
         return res.status( 200 ).json( {getAllProducts} );
         
@@ -27,78 +28,105 @@ export const GetAllProducts = async ( req, res ) => {
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
 }
-
-
-
 export const GetOneProducts = async (req, res) => {
+
     const { id } = req.params;
-    try {
-        const getOneProducts = await Products.findByPk(id, {
-            include: [
-                {
-                    model: ProductColorHigh,
-                    include:[
-                        {model: Highs},
-                        {model: Color}
-                    ]
-                }
-            ]
-        });
 
-        if (!getOneProducts) return res.status(404).json({ message: 'Product not found' });
-        
-        const highsPromises  = getOneProducts.ProductColorHighs.map(async item => {
-            const highData = await item.high;
-            if (highData) {
-                return highData.dataValues;
-            }
-        });
+  try {
+    const product = await Products.findByPk(id, {
+      include: [
+        {
+          model: Highs,
+          as: 'highs',
+          include: [
+            {
+              model: Color,
+              as: 'colors',
+            },
+          ],
+        },
+      ],
+    });
 
-        const colorsPromises  = getOneProducts.ProductColorHighs.map(async item => {
-            const colorData = await item.color;
-            if (colorData) {
-                return colorData.dataValues;
-            }
-        });
-
-        const highs = await Promise.all(highsPromises);
-        const colors = await Promise.all(colorsPromises);
-
-        return res.status(200).json({getOneProducts, highs, colors});
-    } catch (error) {
-        console.error(error); // Imprime el error en la consola para debuggear
-        return res.status(500).json({ message: 'Error interno del servidor' });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-};
 
+    // Ensure talles and colors are always populated, even if empty arrays
+    product.highs = product.highs || [];
+    for (const tall of product.highs) {
+      tall.colors = tall.colors || [];
+    }
+
+    res.status(200).json({ product });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+    // const { id } = req.params;
+    // try {
+    //     const getOneProducts = await Products.findByPk(id);
+
+    //     if (!getOneProducts) return res.status(404).json({ message: 'Product not found' });
+
+    //     return res.status(200).json({getOneProducts});
+    // } catch (error) {
+    //     console.error(error); // Imprime el error en la consola para debuggear
+    //     return res.status(500).json({ message: 'Error interno del servidor' });
+    // }
+};
 export const CreateProducts = async ( req, res ) => {
 
-
-
     try {
-        const { name, price, description, stock, colorId, highId } = req.body;
+        const { name, price, description, stock, variants } = req.body;
 
-        const images = req.files.map( file => file.filename );
-      
-        const product = await Products.create({ name, price, description, stock, image:images.join(',') });
-      
-        const associations = [];
-      
-        for (let i = 0; i < Math.min(colorId.length, highId.length); i++) {
-          const colorIdItem = colorId[i];
-          const highIdItem = highId[i];
-      
-          associations.push({ productId: product.id, colorId: colorIdItem, highId: highIdItem });
-        }
-      
-        await ProductColorHigh.bulkCreate(associations);
-      
-        res.json({ message: 'Producto creado exitosamente' });
-      } catch (error) {
-        res.status(500).json({ error: 'Error al crear el producto' });
-      }
+        if (!req.files || req.files.length === 0) {
+            throw new Error('No se recibieron imágenes');
+          }
+
+        const images = req.files.map(file => file.filename).join(',');
+
+        const product = await Products.create({ name, price, description, stock,images});
+
+
+        const tallesCreados = await Promise.all(
+
+            variants.map(async (talle) => {
+                let talleCreado = await Highs.create({
+                  name: talle.name,
+                  productoId: product.id,
+                  stock: talle.stock
+                });
+            
+                let coloresCreados = []; 
+            
+                if (talle.colors && Array.isArray(talle.colors)) {
+                  coloresCreados = await Promise.all(
+                    talle.colors.map(async (color) => {
+                      return await Color.create({
+                        name: color.name,
+                        talleId: talleCreado.id,
+                        stock: color.stock
+                      });
+                    })
+                  );
+                }
+            
+                talleCreado.addColor(coloresCreados);
+                return talleCreado;
+              })
+          );
+        
+          product.variants = tallesCreados;
+        product.image = images;
+        await product.save();
+        
+          res.status(200).json({ message: 'Producto creado exitosamente', product });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Error al crear el producto', error: error.message });
+    }
 }
-
 export const UpdateProducts = async ( req, res) => {
 
     const { id } = req.params;
@@ -120,7 +148,6 @@ export const UpdateProducts = async ( req, res) => {
     }
     
 }
-
 export const DeleteProducts = async ( req, res) => {
     const { id } = req.params;
 

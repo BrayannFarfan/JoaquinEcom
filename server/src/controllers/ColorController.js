@@ -18,7 +18,6 @@ export const getOneColor = async (req, res) =>{
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
 }
-
 export const createColor = async (req , res) => {
     const { name, stock } = req.body;
     try {
@@ -28,7 +27,6 @@ export const createColor = async (req , res) => {
         return res.status(500).json({ message: 'Error interno del servidor' });
     }
 }
-
 export const updateColor = async (req, res) => {
     const { id } = req.params;
     const { name, stock } = req.body;
@@ -54,7 +52,6 @@ export const updateColor = async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
-
 export const deleteColor = async (req, res) => {
     const { id } = req.params;
 

@@ -7,7 +7,8 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState(null);
   const [productHighs, setProductHighs] = useState([]);
   const [productColor, setProductColor] = useState([]);
-  const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzA3NTE4OTQxLCJleHAiOjE3MDgxMjM3NDF9.9GI6-hrxbLxPi0yKRGgioXnceeGL8Abs67WxWE63lCc';
+  const [colors , setColor] = useState([])
+  const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzA3OTQyMjgzLCJleHAiOjE3MDg1NDcwODN9.fPMtDd9Bz1omgzun-CrxsOPRfqqgqc8PIcogJLNiXxE';
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -26,7 +27,23 @@ const ProductDetailPage = () => {
       }
     };
 
+    const fetchColors = async () =>{
+      try {
+        const res = await axios.get(`http://localhost:3000/api/v1/color`, {
+          headers: {
+            'x-access-token': apiKey 
+          }
+        })
+
+        console.log(res.data);
+        setColor(res.data)
+      } catch (error) {
+        
+      }
+    }
+
     fetchProductDetail();
+    fetchColors();
   }, [id]);
 
   if (!product) {
@@ -51,6 +68,15 @@ const ProductDetailPage = () => {
         
       })
       }
+
+      <select name="" id="">
+        {
+          colors.map( (item, i) =>{
+            return <option value={i}>{item.name}</option>
+          })
+        }
+      </select>
+
     </div>
   );
 };

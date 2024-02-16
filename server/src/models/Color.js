@@ -9,5 +9,5 @@ export const Color = db.define('color', {
         type: DataTypes.INTEGER
     }
 },{
-    timestamps: false
+    timestamps: true
 });

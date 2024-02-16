@@ -17,7 +17,7 @@ const ProductList = () => {
               'x-access-token': apiKey 
             }
           });
-        setProducts(response.data);
+        setProducts(response.data.getAllProducts);
       } catch (error) {
         console.error('Error al obtener los productos:', error);
         // Manejo de errores
