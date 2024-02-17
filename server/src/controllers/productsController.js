@@ -1,6 +1,7 @@
 import { Products } from '../models/Products.js';
 import { Highs } from '../models/Highs.js';
 import { Color } from '../models/Color.js';
+import { Category } from '../models/Category.js';
 
 
 export const GetAllProducts = async ( req, res ) => {
@@ -19,6 +20,10 @@ export const GetAllProducts = async ( req, res ) => {
                   },
                 ],
               },
+              {
+                model: Category,
+                as: 'category',
+              }
             ],
           });
         
@@ -45,6 +50,10 @@ export const GetOneProducts = async (req, res) => {
             },
           ],
         },
+        {
+          model: Category,
+          as: 'category',
+        }
       ],
     });
 
@@ -58,35 +67,49 @@ export const GetOneProducts = async (req, res) => {
       tall.colors = tall.colors || [];
     }
 
-    res.status(200).json({ product });
+    const productWithCategory = {
+      ...product.dataValues,
+      category: product.category.dataValues,
+    };
+
+   return res.status(200).json({ product: productWithCategory });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
-    // const { id } = req.params;
-    // try {
-    //     const getOneProducts = await Products.findByPk(id);
-
-    //     if (!getOneProducts) return res.status(404).json({ message: 'Product not found' });
-
-    //     return res.status(200).json({getOneProducts});
-    // } catch (error) {
-    //     console.error(error); // Imprime el error en la consola para debuggear
-    //     return res.status(500).json({ message: 'Error interno del servidor' });
-    // }
 };
 export const CreateProducts = async ( req, res ) => {
 
     try {
-        const { name, price, description, stock, variants } = req.body;
+        const { name, price, description, stock, variants, nombreCategoria } = req.body;
 
         if (!req.files || req.files.length === 0) {
-            throw new Error('No se recibieron imágenes');
+            return  res.status(200).json({ message: 'No se recibieron imágenes' });
           }
 
         const images = req.files.map(file => file.filename).join(',');
 
-        const product = await Products.create({ name, price, description, stock,images});
+        let categoria = await Category.findOne({
+          where: { name: nombreCategoria },
+        });
+    
+        // Si la categoría no existe, se crea
+        if (!categoria) {
+          categoria = await Category.create({ name: nombreCategoria });
+        }
+    
+        // Verificar si el producto ya está asociado a la categoría
+        let productoAsociado = await Products.findOne({
+          where: {
+            name,
+            categoryId: categoria.id,
+          },
+        });
+    
+        if (productoAsociado) {
+          return  res.status(200).json({ message: 'El producto ya está asociado a la categoría' });
+        }
+
+        const product = await Products.create({ name, price, description, stock,images, categoryId: categoria.id});
 
 
         const tallesCreados = await Promise.all(
@@ -121,10 +144,10 @@ export const CreateProducts = async ( req, res ) => {
         product.image = images;
         await product.save();
         
-          res.status(200).json({ message: 'Producto creado exitosamente', product });
+         return res.status(200).json({ message: 'Producto creado exitosamente', product });
 
     } catch (error) {
-        res.status(500).json({ error: 'Error al crear el producto', error: error.message });
+        return res.status(500).json({ error: 'Error al crear el producto', error: error.message });
     }
 }
 export const UpdateProducts = async ( req, res) => {

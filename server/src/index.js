@@ -8,6 +8,7 @@ import { PayRouter } from './routes/payRouter.js';
 import { OrderRouter } from './routes/orderRouter.js';
 import { HighRouter } from './routes/highRouter.js';
 import { ColorRouter } from './routes/colorRouter.js';
+import { CategorieRouter } from './routes/categoryRouter.js';
 import './config/dbConfig.js';
 import './models/index.js';
 import { dirname, join } from 'path';
@@ -30,6 +31,7 @@ app.use('/api/v1/pay', PayRouter);
 app.use('/api/v1/order', OrderRouter);
 app.use('/api/v1/high', HighRouter);
 app.use('/api/v1/color', ColorRouter);
+app.use('/api/v1/categorie', CategorieRouter);
 app.use(handleNotFound);
 
 app.listen( PORT , () => {
